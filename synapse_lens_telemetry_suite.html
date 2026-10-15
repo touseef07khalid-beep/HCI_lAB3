@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYNAPSE·LENS // Epistemic Contrast & Dissonance Diagnostic Suite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;0,800;1,400&family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #05070c;
+      --card-bg: rgba(10, 15, 26, 0.85);
+      --card-border: rgba(45, 75, 115, 0.35);
+      --neon-cyan: #00f0ff;
+      --neon-amber: #ffaa00;
+      --neon-purple: #c084fc;
+      --neon-rose: #ff0055;
+      --neon-emerald: #00ffaa;
+      --lens-x: 320px;
+      --lens-y: 280px;
+      --lens-radius: 130px;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--void);
+      color: #cbd5e1;
+      font-family: 'JetBrains Mono', monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.04) 0%, transparent 65%),
+        radial-gradient(circle at 100% 100%, rgba(192, 132, 252, 0.03) 0%, transparent 50%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    }
+
+    .hud-title {
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.14em;
+    }
+
+    .grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .glass-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border-radius: 8px;
+    }
+
+    .glass-panel:hover {
+      border-color: rgba(0, 240, 255, 0.35);
+    }
+
+    /* Buttons */
+    .tactical-btn {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      color: #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tactical-btn:hover {
+      background: rgba(0, 240, 255, 0.18);
+      border-color: var(--neon-cyan);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.3);
+    }
+
+    .tactical-btn.active {
+      background: rgba(0, 240, 255, 0.25);
+      border-color: var(--neon-cyan);
+      color: #00f0ff;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    /* Range Sliders */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.07);
+      height: 4px;
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      cursor: pointer;
+    }
+
+    /* Interactive Document Container & Lens Masking */
+    #document-viewport {
+      position: relative;
+      user-select: text;
+    }
+
+    /* Floating Draggable Optical Loupe */
+    #lens-loupe {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      box-shadow: 
+        0 0 0 1px rgba(0, 240, 255, 0.8),
+        0 0 25px rgba(0, 240, 255, 0.3),
+        inset 0 0 25px rgba(0, 240, 255, 0.25);
+      border: 2px solid rgba(0, 240, 255, 0.95);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      z-index: 30;
+      backdrop-filter: contrast(115%) brightness(110%);
+    }
+
+    /* Loupe Reticle Overlay Elements */
+    .loupe-crosshair {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(0, 240, 255, 0.4);
+    }
+    .loupe-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed rgba(0, 240, 255, 0.3);
+      pointer-events: none;
+    }
+
+    /* Target Dynamic Tokens */
+    .token-node {
+      position: relative;
+      padding: 1px 3px;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+      display: inline;
+    }
+
+    /* Filter 1: UV Dark Matter */
+    body.mode-uv .token-unstated {
+      background: rgba(255, 170, 0, 0.25) !important;
+      color: #ffb703 !important;
+      border-bottom: 2px solid #ffaa00;
+      box-shadow: 0 0 12px rgba(255, 170, 0, 0.45);
+      font-weight: 700;
+    }
+    body.mode-uv .token-jargon {
+      opacity: 0.22;
+      filter: blur(0.4px);
+      text-decoration: line-through;
+    }
+
+    /* Filter 2: Steel-Man Prism */
+    body.mode-steelman .token-snark {
+      background: rgba(168, 85, 247, 0.22) !important;
+      color: #d8b4fe !important;
+      border: 1px dashed #c084fc;
+      box-shadow: 0 0 14px rgba(192, 132, 252, 0.4);
+    }
+
+    /* Filter 3: Reductio Stress Test */
+    body.mode-reductio .token-fragility {
+      background: rgba(255, 0, 85, 0.28) !important;
+      color: #ff4d88 !important;
+      border-bottom: 2px solid #ff0055;
+      animation: pulseFragility 1s infinite alternate;
+    }
+
+    /* Filter 4: Doppler Jargon Shift */
+    body.mode-doppler .token-redshift {
+      color: #ff4466 !important;
+      background: rgba(255, 68, 102, 0.18) !important;
+      border-left: 3px solid #ff4466;
+    }
+    body.mode-doppler .token-blueshift {
+      color: #00d4ff !important;
+      background: rgba(0, 212, 255, 0.18) !important;
+      border-right: 3px solid #00d4ff;
+    }
+
+    /* Filter 5: Blindspot Heatmap */
+    body.mode-blindspot .token-blindspot {
+      background: rgba(0, 255, 170, 0.22) !important;
+      color: #5eead4 !important;
+      box-shadow: 0 0 15px rgba(0, 255, 170, 0.35);
+      border-left: 2px solid #00ffaa;
+    }
+
+    @keyframes pulseFragility {
+      from { box-shadow: 0 0 5px rgba(255, 0, 85, 0.4); }
+      to { box-shadow: 0 0 20px rgba(255, 0, 85, 0.9); }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.4);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 240, 255, 0.2);
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--neon-cyan);
+    }
+  </style>
+</head>
+<body class="mode-uv flex flex-col justify-between">
+
+  <!-- ================= TOP HUD NAV ================= -->
+  <header class="border-b border-cyan-950/70 bg-[#060911]/95 px-4 py-2 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40 backdrop-blur-md">
+    <div class="flex items-center gap-3">
+      <div class="relative flex items-center justify-center">
+        <div class="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_15px_#00f0ff] animate-pulse"></div>
+        <div class="absolute w-6 h-6 rounded-full border border-cyan-500/40 animate-ping"></div>
+      </div>
+      <div>
+        <h1 class="hud-title text-base sm:text-lg font-black text-white flex items-center gap-2">
+          SYNAPSE<span class="text-cyan-400">·</span>LENS
+          <span class="text-[9px] font-mono font-normal tracking-widest text-cyan-400/80 border border-cyan-500/30 px-1.5 py-0.5 rounded bg-cyan-950/40">
+            EPISTEMIC SUITE v3.4
+          </span>
+        </h1>
+        <p class="text-[9.5px] text-slate-400 grotesk tracking-wider uppercase font-semibold">
+          Adversarial Narrative Diagnostic & Cognitive Dissonance Optical Bench
+        </p>
+      </div>
+    </div>
+
+    <!-- Central Contrast Gauge Preview -->
+    <div class="hidden xl:flex items-center gap-6 text-[11px] font-mono">
+      <div class="flex items-center gap-2 bg-black/50 px-3 py-1 rounded border border-slate-800">
+        <span class="text-slate-500">DIALECTIC TENSION:</span>
+        <span id="contrast-ratio-badge" class="text-rose-400 font-bold text-xs tracking-wider">14.8:1 SEVERE</span>
+      </div>
+      <div class="flex items-center gap-2 bg-black/50 px-3 py-1 rounded border border-slate-800">
+        <span class="text-slate-500">FOCAL RETICLE:</span>
+        <span id="focal-coords" class="text-cyan-300 font-bold">X: 384, Y: 242</span>
+      </div>
+      <div class="flex items-center gap-2 bg-black/50 px-3 py-1 rounded border border-slate-800">
+        <span class="text-slate-500">EPISTEMIC ENTROPY:</span>
+        <span id="entropy-score" class="text-amber-400 font-bold">0.86 ΔS</span>
+      </div>
+    </div>
+
+    <!-- Master Action Strip -->
+    <div class="flex items-center gap-2">
+      <button id="btn-audio-toggle" class="tactical-btn px-2.5 py-1.5 text-cyan-300">
+        <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" id="audio-indicator"></span>
+        <span id="audio-label">SONICS: ON</span>
+      </button>
+
+      <button id="btn-freeze-lens" class="tactical-btn px-2.5 py-1.5 text-amber-300 border-amber-500/30">
+        <span id="freeze-label">FREEZE LENS</span>
+      </button>
+
+      <button id="btn-custom-input" class="tactical-btn px-2.5 py-1.5 text-purple-300 border-purple-500/30">
+        INGEST CUSTOM
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN LABORATORY GRID ================= -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 p-3">
+
+    <!-- LEFT COLUMN: DEBATE MANIFOLD & OPTICAL BENCH (Col 8) -->
+    <div class="lg:col-span-8 flex flex-col gap-3">
+      
+      <!-- Filter Selector Toolbar -->
+      <div class="glass-panel p-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <span class="text-slate-500 text-[10px] pr-1 uppercase">LENS FILTER:</span>
+          <button class="tactical-btn filter-btn active px-2 py-1 text-[10px]" data-filter="uv">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            1. UV DARK MATTER
+          </button>
+          <button class="tactical-btn filter-btn px-2 py-1 text-[10px]" data-filter="steelman">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+            2. STEEL-MAN PRISM
+          </button>
+          <button class="tactical-btn filter-btn px-2 py-1 text-[10px]" data-filter="reductio">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+            3. REDUCTIO STRESS
+          </button>
+          <button class="tactical-btn filter-btn px-2 py-1 text-[10px]" data-filter="doppler">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+            4. JARGON DOPPLER
+          </button>
+          <button class="tactical-btn filter-btn px-2 py-1 text-[10px]" data-filter="blindspot">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            5. BLINDSPOT HEAT
+          </button>
+        </div>
+
+        <!-- Preset Corpus Select -->
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 text-[10px]">CORPUS:</span>
+          <select id="corpus-select" class="bg-black/80 border border-slate-700 text-cyan-300 rounded px-2 py-0.5 text-[10px] outline-none">
+            <option value="microservices">Microservices vs Monolith Core (2026)</option>
+            <option value="quantum">Post-Quantum Cryptography vs ECC</option>
+            <option value="formal">Autonomous AI vs Formal Verification</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Optical Viewport Container -->
+      <section class="glass-panel flex-1 relative flex flex-col overflow-hidden min-h-[460px] p-4 bg-[#03060c]" id="stage-card">
+        
+        <!-- Viewport Metadata bar -->
+        <div class="flex justify-between items-center text-[10px] text-slate-500 border-b border-white/5 pb-2 mb-3 font-mono">
+          <div class="flex items-center gap-2">
+            <span class="text-cyan-400 font-bold">[FIELD-INSPECTION]</span>
+            <span id="active-filter-title" class="text-slate-300">ACTIVE: UV DARK MATTER (UNSTATED PREMISES)</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span>MAGNIFICATION: <b id="zoom-val" class="text-cyan-400">1.35x</b></span>
+            <span>APERTURE: <b id="aperture-val" class="text-amber-400">260px</b></span>
+          </div>
+        </div>
+
+        <!-- Interactive Document Body -->
+        <div class="relative flex-1 text-sm leading-relaxed text-slate-300 font-sans" id="document-viewport">
+          
+          <!-- Injected Corpus Document -->
+          <div id="corpus-content" class="space-y-4 max-w-3xl pr-4">
+            <!-- Dynamic corpus content rendered here -->
+          </div>
+
+          <!-- THE SYNAPSE OPTICAL LENS LOUPE -->
+          <div id="lens-loupe" style="width: 260px; height: 260px; top: 120px; left: 160px;">
+            <!-- Optical Crosshairs & Coordinates -->
+            <div class="loupe-crosshair w-full h-[1px] top-1/2 left-0 -translate-y-1/2"></div>
+            <div class="loupe-crosshair h-full w-[1px] left-1/2 top-0 -translate-x-1/2"></div>
+            <div class="loupe-ring w-4/5 h-4/5 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+            
+            <!-- Lens HUD Readout Floating Tags -->
+            <div class="absolute top-2 left-1/2 -translate-x-1/2 bg-black/85 text-[8.5px] font-mono text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/40 whitespace-nowrap shadow-md">
+              FOCAL RETICLE // <span id="loupe-filter-tag">UV-SPECTRA</span>
+            </div>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/85 text-[8.5px] font-mono text-amber-400 px-2 py-0.5 rounded border border-amber-500/40 whitespace-nowrap">
+              <span id="loupe-tension-tag">HIDDEN AXIOM EXPOSED</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Loupe Quick Controls -->
+        <div class="mt-3 pt-2 border-t border-white/5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+          <div class="flex items-center gap-3">
+            <span class="text-slate-500 text-[10px]">APERTURE:</span>
+            <input type="range" id="slider-aperture" min="140" max="380" step="10" value="260" class="w-28">
+            <span class="text-slate-500 text-[10px]">ZOOM:</span>
+            <input type="range" id="slider-zoom" min="1.0" max="2.2" step="0.05" value="1.35" class="w-24">
+          </div>
+          <div class="text-[10px] text-slate-500">
+            DRAG MOUSE OVER CLAIMS TO RESOLVE EPISTEMIC CONTRAST
+          </div>
+        </div>
+      </section>
+
+      <!-- LOWER INSTRUMENTS (Tension Matrix & Forensic Inspector) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        
+        <!-- Dialectic Tension Matrix (D_mu_nu) -->
+        <div class="glass-panel p-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-1 mb-2 border-b border-white/5 text-[11px] font-mono">
+            <div class="flex items-center gap-1.5">
+              <span class="text-purple-400 font-bold">[CH-01]</span>
+              <span class="text-slate-200 font-semibold">DIALECTIC TENSION TENSOR $D_{\mu\nu}$</span>
+            </div>
+            <span class="text-[9px] text-purple-400 bg-purple-950/40 border border-purple-800/40 px-1.5 py-0.2 rounded font-mono">ADVERSARIAL DIFF</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-1.5 font-mono text-center text-[10px] my-1" id="matrix-grid">
+            <div class="bg-black/50 border border-cyan-800/40 p-1 rounded text-cyan-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{00}$ (Axiom)</span>
+              <b id="d00-val">0.92</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{01}$ (P1)</span>
+              <b id="d01-val">0.44</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{02}$ (P2)</span>
+              <b id="d02-val">0.78</b>
+            </div>
+            <div class="bg-black/50 border border-rose-900/40 p-1 rounded text-rose-400">
+              <span class="text-[7.5px] text-slate-500 block">$D_{03}$ (Bias)</span>
+              <b id="d03-val">1.42</b>
+            </div>
+
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{10}$</span>
+              <b id="d10-val">0.44</b>
+            </div>
+            <div class="bg-black/50 border border-emerald-800/40 p-1 rounded text-emerald-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{11}$ (Evid)</span>
+              <b id="d11-val">0.31</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{12}$</span>
+              <b id="d12-val">0.85</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{13}$</span>
+              <b id="d13-val">0.19</b>
+            </div>
+
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{20}$</span>
+              <b id="d20-val">0.78</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{21}$</span>
+              <b id="d21-val">0.85</b>
+            </div>
+            <div class="bg-black/50 border border-amber-800/40 p-1 rounded text-amber-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{22}$ (Risk)</span>
+              <b id="d22-val">0.96</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{23}$</span>
+              <b id="d23-val">0.63</b>
+            </div>
+
+            <div class="bg-black/50 border border-rose-900/40 p-1 rounded text-rose-400">
+              <span class="text-[7.5px] text-slate-500 block">$D_{30}$</span>
+              <b id="d30-val">1.42</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{31}$</span>
+              <b id="d31-val">0.19</b>
+            </div>
+            <div class="bg-black/50 border border-slate-800 p-1 rounded text-slate-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{32}$</span>
+              <b id="d32-val">0.63</b>
+            </div>
+            <div class="bg-black/50 border border-purple-800/40 p-1 rounded text-purple-300">
+              <span class="text-[7.5px] text-slate-500 block">$D_{33}$ (Blind)</span>
+              <b id="d33-val">1.89</b>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center text-[10px] font-mono text-slate-400 mt-1">
+            <span>EIGENVALUE $\lambda_1$: <b id="eigen-val" class="text-rose-400">2.64</b></span>
+            <span>SYMMETRY: <b class="text-emerald-400">HERMITIAN INVARIANT</b></span>
+          </div>
+        </div>
+
+        <!-- Live Focal Forensic Inspector -->
+        <div class="glass-panel p-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-1 mb-2 border-b border-white/5 text-[11px] font-mono">
+            <div class="flex items-center gap-1.5">
+              <span class="text-amber-400 font-bold">[CH-02]</span>
+              <span class="text-slate-200 font-semibold">FOCAL FORENSIC DECONSTRUCTION</span>
+            </div>
+            <span class="text-[9px] text-amber-400 bg-amber-950/40 border border-amber-800/40 px-1.5 py-0.2 rounded font-mono">ACTIVE LOUPE</span>
+          </div>
+
+          <div class="bg-black/60 rounded border border-slate-800 p-2 text-xs font-mono min-h-[95px] flex flex-col justify-between">
+            <div>
+              <span class="text-[9px] text-slate-500 block uppercase">Inspected Claim / Under Lens:</span>
+              <p id="inspector-claim" class="text-amber-300 font-semibold mt-0.5 leading-snug">
+                "Each microservice possesses independent autonomous state and zero coupling."
+              </p>
+            </div>
+            <div class="border-t border-white/5 pt-1 mt-1 text-[10px]">
+              <span class="text-slate-500">REFRACTED REALITY:</span>
+              <span id="inspector-reality" class="text-cyan-300 ml-1">
+                Assumes distributed 2PC transactions never fail and network partitions do not exist (CAP Theorem violation).
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 mt-2 text-[10px] font-mono">
+            <div class="bg-black/40 p-1 rounded border border-slate-800">
+              <span class="text-slate-500 block">EVIDENTIAL BASE</span>
+              <span id="evid-val" class="text-cyan-300 font-bold">18% (ANECDOTAL)</span>
+            </div>
+            <div class="bg-black/40 p-1 rounded border border-slate-800">
+              <span class="text-slate-500 block">RHETORICAL BIAS</span>
+              <span id="bias-val" class="text-rose-400 font-bold">HIGH (TECH HYPERBOLE)</span>
+            </div>
+            <div class="bg-black/40 p-1 rounded border border-slate-800">
+              <span class="text-slate-500 block">BREAKPOINT</span>
+              <span id="breakpoint-val" class="text-amber-400 font-bold">N &gt; 40 NODES</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: TELEMETRY COCKPIT & AXIOMS (Col 4) -->
+    <div class="lg:col-span-4 flex flex-col gap-3">
+      
+      <!-- Epistemic Contrast Ratio Gauge (Analogous to WCAG Optical Ratio) -->
+      <section class="glass-panel p-3">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5 text-[11px] font-mono">
+          <div class="flex items-center gap-1.5">
+            <span class="text-cyan-400 font-bold">[METRIC-01]</span>
+            <span class="text-slate-200 font-semibold tracking-wide">EPISTEMIC CONTRAST RATIO ($C_R$)</span>
+          </div>
+          <span class="text-[9px] bg-rose-950/60 text-rose-300 border border-rose-800/40 px-1.5 py-0.5 rounded font-mono">HIGH DISSONANCE</span>
+        </div>
+
+        <div class="flex items-center justify-between my-2">
+          <div>
+            <div class="text-2xl sm:text-3xl font-black text-rose-400 font-mono tracking-tight" id="contrast-metric">
+              14.82 : 1
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono">WCAG FOR IDEAS: CRITICAL DIVERGENCE</span>
+          </div>
+          <div class="text-right font-mono text-[10px] text-slate-400 space-y-0.5">
+            <div>IDEAL SYNTHESIS: <b class="text-emerald-400">3.0 : 1</b></div>
+            <div>ECHO CHAMBER: <b class="text-cyan-400">1.0 : 1</b></div>
+            <div>STATUS: <b class="text-rose-400">INCOMPATIBLE AXIOMS</b></div>
+          </div>
+        </div>
+
+        <!-- Meter bar -->
+        <div class="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800 mt-1">
+          <div id="contrast-gauge-fill" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500" style="width: 82%;"></div>
+        </div>
+      </section>
+
+      <!-- Axiomatic Radar / Bar Breakdown -->
+      <section class="glass-panel p-3">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5 text-[11px] font-mono">
+          <div class="flex items-center gap-1.5">
+            <span class="text-emerald-400 font-bold">[RADAR-02]</span>
+            <span class="text-slate-200 font-semibold tracking-wide">AXIOMATIC PROFILE METRICS</span>
+          </div>
+          <span class="text-[9px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-1.5 py-0.5 rounded font-mono">SPECTRAL SCAN</span>
+        </div>
+
+        <div class="space-y-2.5 font-mono text-xs mt-1">
+          <div>
+            <div class="flex justify-between text-[10.5px] mb-1">
+              <span class="text-slate-400">EMPIRICAL GROUNDING</span>
+              <span id="meter-empirical" class="text-cyan-400 font-bold">34%</span>
+            </div>
+            <div class="h-1.5 bg-slate-900 rounded overflow-hidden">
+              <div id="fill-empirical" class="h-full bg-cyan-400 transition-all duration-300" style="width: 34%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[10.5px] mb-1">
+              <span class="text-slate-400">HIDDEN UNSTATED AXIOMS</span>
+              <span id="meter-hidden" class="text-amber-400 font-bold">88%</span>
+            </div>
+            <div class="h-1.5 bg-slate-900 rounded overflow-hidden">
+              <div id="fill-hidden" class="h-full bg-amber-400 transition-all duration-300" style="width: 88%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[10.5px] mb-1">
+              <span class="text-slate-400">STRUCTURAL FRAGILITY (AT SCALE)</span>
+              <span id="meter-fragility" class="text-rose-400 font-bold">76%</span>
+            </div>
+            <div class="h-1.5 bg-slate-900 rounded overflow-hidden">
+              <div id="fill-fragility" class="h-full bg-rose-500 transition-all duration-300" style="width: 76%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[10.5px] mb-1">
+              <span class="text-slate-400">SEMANTIC DRIFT (OVERLOADED TERMS)</span>
+              <span id="meter-drift" class="text-purple-400 font-bold">62%</span>
+            </div>
+            <div class="h-1.5 bg-slate-900 rounded overflow-hidden">
+              <div id="fill-drift" class="h-full bg-purple-400 transition-all duration-300" style="width: 62%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Terminal Diagnostics Log -->
+      <section class="glass-panel p-3 flex-1 flex flex-col min-h-[220px]">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5 text-[11px] font-mono">
+          <div class="flex items-center gap-1.5">
+            <span class="text-cyan-400 font-bold">[LOG-03]</span>
+            <span class="text-slate-200 font-semibold tracking-wide">EPISTEMIC EVENT STREAM</span>
+          </div>
+          <button id="btn-clear-log" class="text-[9px] text-slate-500 hover:text-slate-300 font-mono">PURGE</button>
+        </div>
+
+        <div id="telemetry-log" class="flex-1 overflow-y-auto space-y-1.5 font-mono text-[10.5px] pr-1 max-h-56">
+          <!-- Real-time logs inject here -->
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= BOTTOM STATUS BAR ================= -->
+  <footer class="border-t border-cyan-950/70 bg-[#04060b] px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-[10px] font-mono text-slate-500">
+    <div class="flex items-center gap-4">
+      <span>OPTICAL BENCH: <b class="text-slate-300">INTERFEROMETER READY</b></span>
+      <span>DISSONANCE ALGORITHM: <b class="text-cyan-400">COSINE DISTANCE + RHETORICAL WEIGHTING</b></span>
+      <span>STATUS: <b class="text-emerald-400">CALIBRATED</b></span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span>WCAG FOR DISCOURSE: <b class="text-amber-400">AAA CONTRAST STANDARDS ACTIVE</b></span>
+    </div>
+  </footer>
+
+  <!-- ================= MODAL: CUSTOM TEXT INGESTION ================= -->
+  <div id="custom-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel p-5 max-w-xl w-full border border-cyan-500/40 space-y-3 font-mono">
+      <div class="flex justify-between items-center border-b border-white/10 pb-2">
+        <h3 class="text-sm font-bold text-white tracking-wider flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          INGEST CUSTOM PROPOSITION / DEBATE CORPUS
+        </h3>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-white text-xs">✕</button>
+      </div>
+      <p class="text-[11px] text-slate-400 leading-normal">
+        Paste architectural proposals, whitepapers, or contentious assertions. The Epistemic Lens engine will tokenize tokens for unstated premises, rhetorical snark, and breakpoint stresses.
+      </p>
+      <textarea id="custom-textarea" rows="6" class="w-full bg-black/80 border border-slate-700 rounded p-2.5 text-xs text-slate-200 font-mono focus:border-cyan-400 focus:outline-none" placeholder="Paste proposal text here..."></textarea>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btn-cancel-custom" class="tactical-btn px-3 py-1.5 text-slate-400">CANCEL</button>
+        <button id="btn-submit-custom" class="tactical-btn px-4 py-1.5 text-cyan-300 border-cyan-400">ANALYZE IN BENCH</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= APPLICATION ENGINE LOGIC ================= -->
+  <script>
+    /* -------------------------------------------------------------
+     * 1. SYSTEM AUDIO ENGINE (Web Audio API)
+     * ------------------------------------------------------------- */
+    let audioCtx = null;
+    let audioMuted = false;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playOpticalSound(type = 'snap') {
+      if (audioMuted || !audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      if (type === 'snap') {
+        // High crisp optical aperture click
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1400, t);
+        osc.frequency.exponentialRampToValueAtTime(320, t + 0.04);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.04);
+      } else if (type === 'hum') {
+        // Subtle resonance sweep
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.linearRampToValueAtTime(260, t + 0.08);
+        gain.gain.setValueAtTime(0.03, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.08);
+      } else if (type === 'alert') {
+        // Discordant dissonance pip
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440, t);
+        osc.frequency.setValueAtTime(620, t + 0.04);
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.1);
+      }
+    }
+
+    document.getElementById('btn-audio-toggle').addEventListener('click', () => {
+      initAudio();
+      audioMuted = !audioMuted;
+      document.getElementById('audio-label').textContent = audioMuted ? 'SONICS: OFF' : 'SONICS: ON';
+      document.getElementById('audio-indicator').className = audioMuted ? 'w-2 h-2 rounded-full bg-slate-600' : 'w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]';
+      logEvent('AUDIO', audioMuted ? 'Acoustic sonification muted' : 'Acoustic synthesizer armed');
+    });
+
+    /* -------------------------------------------------------------
+     * 2. CORPUS REPOSITORY & CONTENT PRESETS
+     * ------------------------------------------------------------- */
+    const CORPUS_DATA = {
+      microservices: {
+        title: "Microservices vs Monolith Architecture: The 2026 Core Scaling Debate",
+        content: `
+          <p class="mb-4">
+            Proponents assert that by decoupling application boundaries into <span class="token-node token-jargon" data-claim="granular domain services" data-reality="Requires 14 separate YAML deployment pipelines and complex distributed tracing overhead.">hyper-granular independent domain microservices</span>, engineering velocity achieves <span class="token-node token-snark" data-claim="effortless near-infinite linear scalability" data-reality="Ignores network serialization tax, database connection starvation, and latency compounding.">effortless near-infinite linear scalability</span>.
+          </p>
+          <p class="mb-4">
+            Under this paradigm, every service maintains its own private relational or document datastore, strictly asserting that <span class="token-node token-unstated" data-claim="zero cross-boundary database transactions are necessary" data-reality="Assumes zero cross-service state consistency requirements exist in actual business contracts.">each service possesses complete transactional independence and zero coupling</span>. Team autonomy is declared absolute, while detractors who advocate for modular monoliths are dismissed as <span class="token-node token-snark" data-claim="clinging to legacy monolithic dinosaurs" data-reality="Modular monoliths provide in-memory compile-time safety and eliminate distributed transaction failures.">dogmatic relics clinging to bygone decades</span>.
+          </p>
+          <p class="mb-4">
+            However, when stressed at <span class="token-node token-fragility" data-claim="high distributed RPC fan-out" data-reality="At 1,000 requests/sec, p99 latency climbs exponentially due to HTTP/gRPC cascading retries.">high fan-out service meshes exceeding 80 micro-instances</span>, latency profiles degrade abruptly. The system relies on overloaded concepts like <span class="token-node token-redshift" data-claim="Eventual Consistency" data-reality="To the business team, 'eventual' means milliseconds; under partition it means hours of stale balances.">"Eventual Consistency"</span> and <span class="token-node token-blueshift" data-claim="Deterministic State" data-reality="State is only deterministic within one pod, but fundamentally chaotic across distributed nodes.">"Deterministic State"</span>. Noticeably absent from the architectural blueprint is any concrete plan for <span class="token-node token-blindspot" data-claim="Omitted Disaster Recovery & Partition Strategy" data-reality="Proposal has zero budget or specification for split-brain network partition resolution.">Disaster Recovery, Replay Backfill Costs, and Inter-Service Authorization Audits</span>.
+          </p>
+        `
+      },
+      quantum: {
+        title: "Post-Quantum Cryptography (PQC Lattice) vs Classical ECC Standards",
+        content: `
+          <p class="mb-4">
+            The national infrastructure committee claims that immediate mandatory migration to <span class="token-node token-jargon" data-claim="Lattice-based ML-KEM/Kyber algorithms" data-reality="Significantly increases public key payload sizes from 64 bytes to thousands of bytes per packet.">Lattice-based Post-Quantum Cryptographic ciphers</span> is an indisputable imperative, ensuring <span class="token-node token-snark" data-claim="absolute mathematical invulnerability against quantum threats" data-reality="Assumes side-channel attacks and microarchitectural timing leaks will not compromise hardware implementations.">absolute mathematical invulnerability against any future Shor's algorithm attacks</span>.
+          </p>
+          <p class="mb-4">
+            This migration rests upon the unstated premise that <span class="token-node token-unstated" data-claim="Zero-day structural lattice vulnerabilities do not exist" data-reality="Lattice math is relatively young compared to RSA/ECC and could harbor latent mathematical shortcuts.">lattice hardness assumptions are as mathematically mature as prime factorization and elliptic curves</span>. Proponents dismiss legacy elliptic curves as <span class="token-node token-snark" data-claim="obsolete toys for an era before quantum supremacy" data-reality="Classical ECC remains rock-solid against every currently existing supercomputer in production.">obsolete toys awaiting imminent quantum demolition</span>.
+          </p>
+          <p class="mb-4">
+            Yet under low-power IoT constraints, <span class="token-node token-fragility" data-claim="Lattice key encapsulation packet size explosion" data-reality="Massive ciphertext size forces packet fragmentation across cellular and satellite IoT uplinks.">key negotiation payloads exceeding 1,500 bytes cause fatal fragmentation loops</span>. Terms like <span class="token-node token-redshift" data-claim="Quantum Proof" data-reality="Does not mean immune to implementation flaws or memory leak side-channels.">"Quantum Proof"</span> and <span class="token-node token-blueshift" data-claim="Drop-in Replacement" data-reality="Drop-in for code, but catastrophic for MTU packet sizing and embedded RAM buffers.">"Drop-in Replacement"</span> suffer immense semantic drift. Completely omitted from the review is <span class="token-node token-blindspot" data-claim="Embedded Hardware Memory Footprint" data-reality="No migration budget or feasibility study provided for billions of deployed microcontroller chips.">Microcontroller RAM constraints, certificate chain bloating, and battery drain benchmarks</span>.
+          </p>
+        `
+      },
+      formal: {
+        title: "Autonomous Agentic AI vs Formal Provable Software Verification",
+        content: `
+          <p class="mb-4">
+            Silicon Valley researchers proclaim that <span class="token-node token-jargon" data-claim="Autonomous Multi-Agent LLM Orchestrators" data-reality="Stochastic token prediction without any deterministic formal verification guarantees.">self-correcting generative AI coding agents</span> will supersede classical formal verification methods, providing <span class="token-node token-snark" data-claim="magical self-healing software at zero human developer cost" data-reality="Hallucinations compound exponentially when agents evaluate their own peer outputs.">flawless, self-healing architectures with zero human engineering toil</span>.
+          </p>
+          <p class="mb-4">
+            The argument relies upon the unverified premise that <span class="token-node token-unstated" data-claim="Stochastic consensus equals formal proof" data-reality="Agreement between three probability models does not equal mathematical soundness (Gödel / Turing undecidability).">probabilistic token consensus is equivalent to mathematical program correctness</span>. Proponents ridicule formal logic, TLA+, and Coq proofs as <span class="token-node token-snark" data-claim="academic pedantry for people who can't ship code" data-reality="Formal proofs are the only reason aerospace flight computers and medical pacemakers do not panic.">academic pedantry for people afraid to ship velocity</span>.
+          </p>
+          <p class="mb-4">
+            When stressed under <span class="token-node token-fragility" data-claim="Recursive Agent Hallucination Cascades" data-reality="In test runs, agents hallucinated fake API contracts and approved each other's faulty code commits.">iterative 50-step recursive autonomy loops</span>, code soundness degrades rapidly. Critical words like <span class="token-node token-redshift" data-claim="Reasoning" data-reality="Vector pattern matching conflated with deductive causal inference.">"Reasoning"</span> and <span class="token-node token-blueshift" data-claim="Verified" data-reality="'Verified' here means a test passed once, not that it is invariant to edge cases.">"Verified"</span> mask deep cognitive friction. Glaringly absent is any mention of <span class="token-node token-blindspot" data-claim="Legal Liability & Deterministic Failure Modes" data-reality="Zero discussion on legal liability when an autonomous agent ships an exploitable zero-day exploit.">Deterministic Worst-Case Guarantees, Epistemic Auditing, and Catastrophic Liability</span>.
+          </p>
+        `
+      }
+    };
+
+    /* -------------------------------------------------------------
+     * 3. OPTICAL LENS LOUPE & POSITION ENGINE
+     * ------------------------------------------------------------- */
+    const stageCard = document.getElementById('stage-card');
+    const docViewport = document.getElementById('document-viewport');
+    const corpusContent = document.getElementById('corpus-content');
+    const lensLoupe = document.getElementById('lens-loupe');
+    const focalCoords = document.getElementById('focal-coords');
+    const inspectorClaim = document.getElementById('inspector-claim');
+    const inspectorReality = document.getElementById('inspector-reality');
+
+    let lensFrozen = false;
+    let lensRadius = 130;
+    let zoomLevel = 1.35;
+    let currentFilter = 'uv';
+
+    function setFilterMode(mode) {
+      currentFilter = mode;
+      document.body.className = `mode-${mode} flex flex-col justify-between`;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === mode);
+      });
+
+      const titles = {
+        uv: "ACTIVE: UV DARK MATTER (UNSTATED PREMISES)",
+        steelman: "ACTIVE: STEEL-MAN PRISM (RATIONAL RECONSTRUCTION)",
+        reductio: "ACTIVE: REDUCTIO AD ABSURDUM (BREAKPOINT STRESS)",
+        doppler: "ACTIVE: JARGON DOPPLER SHIFT (SEMANTIC DIVERGENCE)",
+        blindspot: "ACTIVE: PERIPHERAL BLINDSPOT HEATMAP (OMISSIONS)"
+      };
+      document.getElementById('active-filter-title').textContent = titles[mode];
+      document.getElementById('loupe-filter-tag').textContent = `${mode.toUpperCase()}-SPECTRA`;
+
+      playOpticalSound('snap');
+      logEvent('FILTER', `Optical prism switched to [${mode.toUpperCase()}]`);
+      updateTelemetryScores(mode);
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => setFilterMode(btn.dataset.filter));
+    });
+
+    // Load Corpus
+    function loadCorpus(key) {
+      const data = CORPUS_DATA[key];
+      if (!data) return;
+      corpusContent.innerHTML = data.content;
+      logEvent('CORPUS', `Loaded proposition: "${data.title.slice(0, 36)}..."`);
+      attachTokenListeners();
+    }
+
+    document.getElementById('corpus-select').addEventListener('change', (e) => {
+      loadCorpus(e.target.value);
+    });
+
+    // Optical Loupe Mouse Movement
+    docViewport.addEventListener('mousemove', (e) => {
+      if (lensFrozen) return;
+
+      const rect = docViewport.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Position loupe centered at cursor
+      const left = x - lensRadius;
+      const top = y - lensRadius;
+
+      lensLoupe.style.left = `${left}px`;
+      lensLoupe.style.top = `${top}px`;
+      focalCoords.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+
+      // Inspect elements directly under focal center
+      inspectFocalElement(e.clientX, e.clientY);
+    });
+
+    function inspectFocalElement(clientX, clientY) {
+      // Temporarily hide loupe pointer events to read underneath element
+      const el = document.elementFromPoint(clientX, clientY);
+      if (!el) return;
+
+      const token = el.closest('.token-node');
+      if (token) {
+        const claim = token.getAttribute('data-claim') || token.textContent;
+        const reality = token.getAttribute('data-reality') || "Under high tension.";
+
+        inspectorClaim.textContent = `"${claim.trim()}"`;
+        inspectorReality.textContent = reality;
+
+        playOpticalSound('hum');
+
+        // Dynamic badge updates
+        if (token.classList.contains('token-unstated')) {
+          document.getElementById('loupe-tension-tag').textContent = "UNSTATED AXIOM EXPOSED";
+          document.getElementById('loupe-tension-tag').className = "text-amber-400";
+        } else if (token.classList.contains('token-snark')) {
+          document.getElementById('loupe-tension-tag').textContent = "STEEL-MAN FORMULATION";
+          document.getElementById('loupe-tension-tag').className = "text-purple-400";
+        } else if (token.classList.contains('token-fragility')) {
+          document.getElementById('loupe-tension-tag').textContent = "BREAKPOINT DETECTED (1000x)";
+          document.getElementById('loupe-tension-tag').className = "text-rose-400";
+        } else if (token.classList.contains('token-redshift') || token.classList.contains('token-blueshift')) {
+          document.getElementById('loupe-tension-tag').textContent = "SEMANTIC DRIFT FLAGGED";
+          document.getElementById('loupe-tension-tag').className = "text-cyan-400";
+        } else if (token.classList.contains('token-blindspot')) {
+          document.getElementById('loupe-tension-tag').textContent = "STRUCTURAL BLINDSPOT";
+          document.getElementById('loupe-tension-tag').className = "text-emerald-400";
+        }
+      }
+    }
+
+    function attachTokenListeners() {
+      document.querySelectorAll('.token-node').forEach(tok => {
+        tok.addEventListener('mouseenter', () => {
+          playOpticalSound('alert');
+        });
+      });
+    }
+
+    // Freeze Lock Lens
+    const btnFreeze = document.getElementById('btn-freeze-lens');
+    btnFreeze.addEventListener('click', () => {
+      lensFrozen = !lensFrozen;
+      btnFreeze.classList.toggle('active', lensFrozen);
+      document.getElementById('freeze-label').textContent = lensFrozen ? 'UNLOCK LENS' : 'FREEZE LENS';
+      logEvent('LENS', lensFrozen ? 'Focal coordinates locked in place' : 'Loupe tracking free-motion');
+      playOpticalSound('snap');
+    });
+
+    // Aperture & Zoom Sliders
+    const sliderAperture = document.getElementById('slider-aperture');
+    const sliderZoom = document.getElementById('slider-zoom');
+
+    sliderAperture.addEventListener('input', (e) => {
+      const size = parseInt(e.target.value);
+      lensRadius = size / 2;
+      lensLoupe.style.width = `${size}px`;
+      lensLoupe.style.height = `${size}px`;
+      document.getElementById('aperture-val').textContent = `${size}px`;
+    });
+
+    sliderZoom.addEventListener('input', (e) => {
+      zoomLevel = parseFloat(e.target.value);
+      document.getElementById('zoom-val').textContent = `${zoomLevel.toFixed(2)}x`;
+      lensLoupe.style.backdropFilter = `contrast(${Math.round(zoomLevel * 100)}%) brightness(${Math.round(zoomLevel * 90)}%)`;
+    });
+
+    /* -------------------------------------------------------------
+     * 4. TELEMETRY, GAUGES & METRIC CALCULATOR
+     * ------------------------------------------------------------- */
+    function updateTelemetryScores(mode) {
+      const scores = {
+        uv: { cr: "14.82 : 1", label: "SEVERE DISSONANCE", pct: 82, emp: "28%", hidden: "92%", frag: "74%", drift: "65%", ent: "0.88 ΔS" },
+        steelman: { cr: "4.15 : 1", label: "MODERATE HARMONY", pct: 42, emp: "64%", hidden: "38%", frag: "32%", drift: "28%", ent: "0.42 ΔS" },
+        reductio: { cr: "22.40 : 1", label: "CRITICAL COLLAPSE", pct: 95, emp: "15%", hidden: "84%", frag: "98%", drift: "81%", ent: "0.96 ΔS" },
+        doppler: { cr: "11.20 : 1", label: "SEMANTIC CHASM", pct: 68, emp: "42%", hidden: "56%", frag: "60%", drift: "94%", ent: "0.72 ΔS" },
+        blindspot: { cr: "18.60 : 1", label: "UNMITIGATED RISK", pct: 88, emp: "22%", hidden: "90%", frag: "86%", drift: "70%", ent: "0.91 ΔS" }
+      };
+
+      const s = scores[mode] || scores.uv;
+      document.getElementById('contrast-metric').textContent = s.cr;
+      document.getElementById('contrast-ratio-badge').textContent = `${s.cr} ${s.label.split(' ')[0]}`;
+      document.getElementById('contrast-gauge-fill').style.width = `${s.pct}%`;
+      document.getElementById('entropy-score').textContent = s.ent;
+
+      // Update Meter Bars
+      document.getElementById('meter-empirical').textContent = s.emp;
+      document.getElementById('fill-empirical').style.width = s.emp;
+
+      document.getElementById('meter-hidden').textContent = s.hidden;
+      document.getElementById('fill-hidden').style.width = s.hidden;
+
+      document.getElementById('meter-fragility').textContent = s.frag;
+      document.getElementById('fill-fragility').style.width = s.frag;
+
+      document.getElementById('meter-drift').textContent = s.drift;
+      document.getElementById('fill-drift').style.width = s.drift;
+
+      // Animate Tensor Eigenvalue
+      document.getElementById('eigen-val').textContent = (s.pct / 32).toFixed(2);
+      document.getElementById('d00-val').textContent = (s.pct / 100).toFixed(2);
+      document.getElementById('d33-val').textContent = ((100 - s.pct) / 50 + 0.5).toFixed(2);
+    }
+
+    // Logging Terminal
+    const logContainer = document.getElementById('telemetry-log');
+    function logEvent(channel, message, level = 'info') {
+      const row = document.createElement('div');
+      const time = new Date().toTimeString().split(' ')[0];
+
+      let channelClass = 'text-cyan-400';
+      if (channel === 'FILTER') channelClass = 'text-amber-400';
+      if (channel === 'CORPUS') channelClass = 'text-purple-400';
+      if (channel === 'LENS') channelClass = 'text-emerald-400';
+      if (level === 'warn') channelClass = 'text-rose-400';
+
+      row.className = 'flex items-start gap-1.5 leading-tight';
+      row.innerHTML = `<span class="text-slate-600">[${time}]</span>
+                       <span class="font-bold ${channelClass}">[${channel}]</span>
+                       <span class="text-slate-300 break-words">${message}</span>`;
+      logContainer.appendChild(row);
+      logContainer.scrollTop = logContainer.scrollHeight;
+
+      if (logContainer.children.length > 50) {
+        logContainer.removeChild(logContainer.firstChild);
+      }
+    }
+
+    document.getElementById('btn-clear-log').addEventListener('click', () => {
+      logContainer.innerHTML = '';
+      logEvent('SYS', 'Telemetry diagnostic stream cleared');
+    });
+
+    /* -------------------------------------------------------------
+     * 5. MODAL & CUSTOM INGESTION HANDLER
+     * ------------------------------------------------------------- */
+    const modal = document.getElementById('custom-modal');
+    const customTextarea = document.getElementById('custom-textarea');
+
+    document.getElementById('btn-custom-input').addEventListener('click', () => {
+      modal.classList.remove('hidden');
+      initAudio();
+    });
+
+    document.getElementById('btn-close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('btn-cancel-custom').addEventListener('click', () => modal.classList.add('hidden'));
+
+    document.getElementById('btn-submit-custom').addEventListener('click', () => {
+      const text = customTextarea.value.trim();
+      if (!text) return;
+
+      // Wrap sentences into interactive diagnostic tokens
+      const sentences = text.split(/(?<=[.?!])\s+/);
+      const taggedHtml = sentences.map((s, idx) => {
+        let nodeClass = 'token-unstated';
+        let reality = "Axiomatic premise relies on external unverified conditions.";
+        if (idx % 4 === 1) { nodeClass = 'token-snark'; reality = "Hyperbolic claim stripped of defensive phrasing."; }
+        if (idx % 4 === 2) { nodeClass = 'token-fragility'; reality = "Collapses under edge-case boundary stress."; }
+        if (idx % 4 === 3) { nodeClass = 'token-redshift'; reality = "Semantic drift detected in core terminology."; }
+
+        return `<span class="token-node ${nodeClass}" data-claim="${s.slice(0, 60)}..." data-reality="${reality}">${s}</span>`;
+      }).join(' ');
+
+      corpusContent.innerHTML = `<div class="p-2 border-l-2 border-cyan-400 bg-cyan-950/20 mb-3 text-xs text-cyan-300 font-mono">CUSTOM INGESTED PROPOSITION:</div><p class="leading-relaxed">${taggedHtml}</p>`;
+      modal.classList.add('hidden');
+      attachTokenListeners();
+      logEvent('INGEST', `Custom text corpus tokenized (${sentences.length} assertions parsed)`);
+      playOpticalSound('snap');
+    });
+
+    // Initialize default state
+    window.addEventListener('load', () => {
+      loadCorpus('microservices');
+      updateTelemetryScores('uv');
+      logEvent('BOOT', 'Synapse·Lens optical kernel online. Reticle calibrated.');
+      logEvent('READY', 'Ready for adversarial narrative deconstruction.');
+    });
+  </script>
+</body>
+</html>
